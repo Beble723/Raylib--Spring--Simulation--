@@ -18,10 +18,15 @@ constexpr int SLIDER_W = 220;
 constexpr int SLIDER_FIRST_Y = 420;
 constexpr int SLIDER_GAP = 42;
 
+constexpr int SLDER_SPRING  = 0;
+constexpr int SLDER_MASS    = 1;
+constexpr int SLDER_DAMPING = 2;
+constexpr int SLDER_DISPLACE = 3;
+
 struct Slider
 {
 
-    const char name; // name/lable of slider
+    const char* name; // name/lable of slider
     float min;       // min value range
     float max;       // max value range
     float value;     // current value displayed/used
@@ -49,7 +54,7 @@ struct Slider
     {
         float thumbX = x + (value - min) / (max - min) * z;
 
-        DrawLineEx({(float)x, (float)y}, {(float)(x + z, (float)y}, 2, LIGHTGRAY);
+        DrawLineEx({(float)x, (float)y}, {(float)(x + z), (float)y}, 2, LIGHTGRAY);
         DrawLineEx({(float)x, (float)y}, {thumbX, (float)y}, 3, {83, 74, 183, 255});
 
         DrawCircle((int)thumbX, y, 8, {83, 74, 183, 255});
@@ -62,7 +67,10 @@ struct Slider
         DrawText(buf, x + z + 10, y - 6, 13, WHITE);
     }
 
-    void DrawSpring(float x1, float y, float x2, int coils, float height, Color col)
+  
+};
+
+  void DrawSpring(float x1, float y, float x2, int coils, float height, Color col)
     {
         float len = x2 - x1;
         float segW = len / (coils * 2 + 2);
@@ -85,7 +93,7 @@ struct Slider
         Vector2 end = {x2, y};
         DrawLineEx(prev, end, 2, col);
     }
-};
+
 
 int main()
 {
@@ -93,12 +101,11 @@ int main()
     InitWindow(SCREEN_W, SCREEN_H, "Spring:Simulation");
     SetTargetFPS(60);
 
-    float pos, vel;
+    float pos= 100.0f;
+    float vel= 0.0f;
     bool isPaused = false;
 
-    float dt = GetFrameTime();
-    Vector2 mouse = GetMousePosition();
-    bool mouseDown = IsMouseButtonDown(MOUSE_LEFT_BUTTON);
+  
 
     std::array<Slider, 4> sliders = {{
         {"Spring", 10, 300, 80, SLIDER_X, SLIDER_FIRST_Y, SLIDER_W},
@@ -110,15 +117,19 @@ int main()
     while (!WindowShouldClose())
     {
 
+          float dt = GetFrameTime();
+    Vector2 mouse = GetMousePosition();
+    bool mouseDown = IsMouseButtonDown(MOUSE_LEFT_BUTTON);
+
         if (IsKeyPressed(KEY_SPACE))
             isPaused = !isPaused;
 
         if (!isPaused)
         {
-            float k = sliders[spring].value;
-            float m = sliders[mass].value;
-            float b = sliders[damping].value;
-            float d = sliders[displace].value;
+            float k = sliders[0].value;
+            float m = sliders[1].value;
+            float b = sliders[2].value;
+            float d = sliders[3].value;
 
             float accel = (-k * pos - b * vel) / m;
             vel += accel * dt;
@@ -129,6 +140,8 @@ int main()
 
             EndDrawing();
         }
+      
 
         return 0;
     }
+}
