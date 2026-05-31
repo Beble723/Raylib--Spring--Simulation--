@@ -1,9 +1,9 @@
 #include "raylib.h"
 #include "raymath.h"
 #include <cmath>
-#include <iostream>// do i need this too?
-#include <cstdio>// do i need this?
-
+#include <iostream> // do i need this too?
+#include <cstdio>   // do i need this?
+#include <array>
 // future me add coments pls im beging you
 // window
 
@@ -18,34 +18,35 @@ constexpr int SLIDER_W = 220;
 constexpr int SLIDER_FIRST_Y = 420;
 constexpr int SLIDER_GAP = 42;
 
+struct Slider
+{
 
+    const char name; // name/lable of slider
+    float min;       // min value range
+    float max;       // max value range
+    float value;     // current value displayed/used
+    float x, y, z;   // position
 
-    struct Slider
+    // struct members
+    bool Update(Vector2 mouse, bool mouseDown)
     {
-
-        const char name; // name/lable of slider
-        float min;       // min value range
-        float max;       // max value range
-        float, value;    // current value displayed/used
-        float x, y, z;   // position
-
-
-
-        //struct members
-    bool Update(Vector2 mouse, bool mouseDown) {
         float thumbX = x + (value - min) / (max - min) * z;
-        Rectangle thumb = { thumbX - 8, (float)y - 10, 16, 20 };
+        Rectangle thumb = {thumbX - 8, (float)y - 10, 16, 20};
 
-        if (mouseDown && CheckCollisionPointRec(mouse, thumb)) {
+        if (mouseDown && CheckCollisionPointRec(mouse, thumb))
+        {
             float newX = mouse.x;
-            if (newX < x)     newX = (float)x;
-            if (newX > x + z) newX = (float)(x + z);
+            if (newX < x)
+                newX = (float)x;
+            if (newX > x + z)
+                newX = (float)(x + z);
             value = min + (newX - x) / z * (max - min);
             return true;
         }
         return false;
     }
-    void Draw() const {
+    void Draw() const
+    {
         float thumbX = x + (value - min) / (max - min) * z;
 
         DrawLineEx({(float)x, (float)y}, {(float)(x + z, (float)y}, 2, LIGHTGRAY);
@@ -58,30 +59,32 @@ constexpr int SLIDER_GAP = 42;
 
         char buf[32];
         snprintf(buf, sizeof(buf), "%.2f", value);
-        DrawText(buf, x + z+ 10, y - 6, 13, WHITE);
+        DrawText(buf, x + z + 10, y - 6, 13, WHITE);
     }
 
-    void DrawSpring(float x1, float y, float x2, int coils, float height, Color col) {
-    float len  = x2 - x1;
-    float segW = len / (coils * 2 + 2);
+    void DrawSpring(float x1, float y, float x2, int coils, float height, Color col)
+    {
+        float len = x2 - x1;
+        float segW = len / (coils * 2 + 2);
 
-    Vector2 prev = { x1, y };
-    Vector2 p1   = { x1 + segW, y };
-    DrawLineEx(prev, p1, 2, col);
-    prev = p1;
+        Vector2 prev = {x1, y};
+        Vector2 p1 = {x1 + segW, y};
+        DrawLineEx(prev, p1, 2, col);
+        prev = p1;
 
-    for (int i = 0; i < coils; i++) {
-        float bx = x1 + segW + i * 2 * segW;
-        Vector2 top = { bx + segW * 0.5f, y - height };
-        Vector2 bot = { bx + segW * 1.5f, y + height };
-        DrawLineEx(prev, top, 2, col);
-        DrawLineEx(top,  bot, 2, col);
-        prev = bot;
+        for (int i = 0; i < coils; i++)
+        {
+            float bx = x1 + segW + i * 2 * segW;
+            Vector2 top = {bx + segW * 0.5f, y - height};
+            Vector2 bot = {bx + segW * 1.5f, y + height};
+            DrawLineEx(prev, top, 2, col);
+            DrawLineEx(top, bot, 2, col);
+            prev = bot;
+        }
+
+        Vector2 end = {x2, y};
+        DrawLineEx(prev, end, 2, col);
     }
-
-    Vector2 end = { x2, y };
-    DrawLineEx(prev, end, 2, col);
-}
 };
 
 int main()
@@ -90,23 +93,42 @@ int main()
     InitWindow(SCREEN_W, SCREEN_H, "Spring:Simulation");
     SetTargetFPS(60);
 
-    float pos.vel;
-    bool isPaused;
+    float pos, vel;
+    bool isPaused = false;
+
+    float dt = GetFrameTime();
+    Vector2 mouse = GetMousePosition();
+    bool mouseDown = IsMouseButtonDown(MOUSE_LEFT_BUTTON);
+
+    std::array<Slider, 4> sliders = {{
+        {"Spring", 10, 300, 80, SLIDER_X, SLIDER_FIRST_Y, SLIDER_W},
+        {"Mass", 0.5, 10, 2, SLIDER_X, SLIDER_FIRST_Y + SLIDER_GAP, SLIDER_W},
+        {"Damping", 0, 5, 0.3, SLIDER_X, SLIDER_FIRST_Y + SLIDER_GAP * 2, SLIDER_W},
+        {"Displace", 10, 150, 100, SLIDER_X, SLIDER_FIRST_Y + SLIDER_GAP * 3, SLIDER_W},
+    }};
 
     while (!WindowShouldClose())
     {
 
-        BeginDrawing();
+        if (IsKeyPressed(KEY_SPACE))
+            isPaused = !isPaused;
 
-        DrawText("Space = pause | R= Reset", SCREEN_W - 20, SCREEN_H - 20, RAYWHITE);
-        if (isPaused)
+        if (!isPaused)
         {
+            float k = sliders[spring].value;
+            float m = sliders[mass].value;
+            float b = sliders[damping].value;
+            float d = sliders[displace].value;
 
-            DrawText("Paused", SCREEN_W - 20, SCREEN_H - 20, RAYWHITE);
+            float accel = (-k * pos - b * vel) / m;
+            vel += accel * dt;
+            pos += vel * dt;
+
+            BeginDrawing();
+            ClearBackground(BLACK);
+
+            EndDrawing();
         }
 
-        EndDrawing();
+        return 0;
     }
-
-    return 0;
-}
